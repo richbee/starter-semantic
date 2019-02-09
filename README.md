@@ -1,3 +1,14 @@
+# Starter
+
+A starter react-redux-thunk web app configured to sign users up to and authenticate from AWS cognito user pools.
+
+# Knock yourself out
+
+This is intended to get me up and running with a web app quickly, rather than faffing about with all the boilerplate.
+
+If anyone would like to educate me in better ways to do this, I'd be grateful!
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
