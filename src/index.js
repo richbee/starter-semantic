@@ -13,19 +13,19 @@ import thunk from 'redux-thunk';
 import rootReducer from './reducers';
 import {Provider} from 'react-redux';
 
-//import Amplify from 'aws-amplify';
-//import config from './config';
+import Amplify from 'aws-amplify';
+import config from './config';
 
 //configure AWS
-// Amplify.configure({
-//   Auth: {
-//     mandatorySignIn: true,
-//     region: config.cognito.REGION,
-//     userPoolId: config.cognito.USER_POOL_ID,
-//     identityPoolId: config.cognito.IDENTITY_POOL_ID,
-//     userPoolWebClientId: config.cognito.APP_CLIENT_ID
-//   }
-// });
+Amplify.configure({
+  Auth: {
+    mandatorySignIn: true,
+    region: config.cognito.REGION,
+    userPoolId: config.cognito.USER_POOL_ID,
+    identityPoolId: config.cognito.IDENTITY_POOL_ID,
+    userPoolWebClientId: config.cognito.APP_CLIENT_ID
+  }
+});
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 const store = createStore(rootReducer,composeEnhancers(applyMiddleware(thunk)));

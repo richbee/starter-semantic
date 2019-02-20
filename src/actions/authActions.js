@@ -1,3 +1,4 @@
+import { Auth } from 'aws-amplify';
 
 // User levels
 export const userLevel = {
@@ -108,6 +109,19 @@ export function logUserOut() {
 export function signUp(username, password, fullname) {
   return function(dispatch) {
     //signup code here
-    console.log('signing up username:'+username+' password:'+password+' name:'+fullname);
+    console.log('signing up '+username);
+    Auth.signUp({
+      username: username,
+      password: password
+    })
+    .then(data => {
+      console.log(data);
+      //data.JSON.parse()
+      return data;
+    })
+    .then(user => dispatch(signupSuccess(user)))
+    .catch(err => {
+      dispatch(signupFail(err.message));
+    });
   }
 }

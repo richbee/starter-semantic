@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {Link} from 'react-router-dom';
-import {Menu, Container, Dropdown, Button} from 'semantic-ui-react';
+import {Menu, Container} from 'semantic-ui-react';
 import {connect} from 'react-redux';
 import {logUserOut, userLevel} from './actions/authActions';
 //menuitem component to only show if user permissions allow
@@ -46,7 +46,7 @@ class MainNav extends Component {
   }
 
   render() {
-    console.log(this.props);
+    console.log('Nav props:',this.props);
     return(
       <Menu borderless>
         <Container text>
