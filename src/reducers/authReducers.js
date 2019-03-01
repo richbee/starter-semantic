@@ -3,7 +3,8 @@ import {
   LOGIN_START,
   LOGIN_SUCCESS,
   LOGIN_FAIL,
-  LOGOUT,
+  LOGOUT_START,
+  LOGOUT_COMPLETE,
   SIGNUP_START,
   SIGNUP_SUCCESS,
   SIGNUP_FAIL
@@ -13,57 +14,66 @@ import {
 const initialState = {
   loggedIn: false,
   loggingIn: false,
+  loggingOut: false,
   loginFailureReason: "",
   currentUser: {},
   signupInProgress: false,
-  signupFailureReason: ""
+  signupSuccess: false,
+  signupFailureReason: "",
+  accessToken: ""
 }
 
 export const userAuth = (state = initialState, action) => {
   switch(action.type) {
     case LOGIN_START:
       return {
-        loggingIn: true,
-        ...state
+        ...state,
+        loggingIn: true
       }
     case LOGIN_SUCCESS:
       return {
+        ...state,
         loggingIn:false,
         loggedIn: true,
         currentUser: action.user,
-        loginFailureReason: '',
-        ...state
+        accessToken: action.token,
+        loginFailureReason: ''
       }
     case LOGIN_FAIL:
       return {
+        ...state,
         loggingIn: false,
         loggedIn: false,
         currentUser: {},
-        loginFailureReason: action.reason,
-        ...state
+        loginFailureReason: action.reason
       }
-    case LOGOUT:
+    case LOGOUT_START:
+      return {
+        ...state,
+        loggingOut: true
+      }
+    case LOGOUT_COMPLETE:
       console.log('logging out');
       return {
+        ...state,
         loggedIn: false,
-        currentUser: {},
-        ...state
+        loggingOut: false,
+        currentUser: {}
       }
     case SIGNUP_START:
       return {
+        ...state,
         signupInProgress: true,
-        currentUser: {},
-        ...state
+        currentUser: {}
       }
     case SIGNUP_SUCCESS:
       return {
         ...state,
         signupInProgress: false,
+        signupSuccess: true,
         currentUser: action.user
-
       }
     case SIGNUP_FAIL:
-      console.log('signup failed: ',action.reason)
       return {
         ...state,
         signupInProgress: false,

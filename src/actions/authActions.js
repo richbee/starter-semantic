@@ -12,7 +12,8 @@ export const userLevel = {
 export const LOGIN_START = 'LOGIN_START';
 export const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
 export const LOGIN_FAIL = 'LOGIN_FAIL';
-export const LOGOUT = 'LOGOUT';
+export const LOGOUT_START = 'LOGOUT_START';
+export const LOGOUT_COMPLETE = 'LOGOUT_COMPLETE';
 export const SIGNUP_START = 'SIGNUP_START';
 export const SIGNUP_SUCCESS = 'SIGNUP_SUCCESS';
 export const SIGNUP_FAIL = 'SIGNUP_FAIL';
@@ -22,9 +23,10 @@ export const loginStart = () => ({
   type: LOGIN_START
 });
 
-export const loginSuccess = (user) => ({
+export const loginSuccess = (user, token) => ({
   type: LOGIN_SUCCESS,
-  user: user
+  user: user,
+  token: token
 });
 
 export const loginFail = (reason) => ({
@@ -32,8 +34,12 @@ export const loginFail = (reason) => ({
   reason: reason
 })
 
-export const logOut = () => ({
-  type: LOGOUT
+export const logOutStart = () => ({
+  type: LOGOUT_START
+});
+
+export const logOutComplete = () => ({
+  type: LOGOUT_COMPLETE
 });
 
 export const signupStart = () => ({
@@ -53,8 +59,6 @@ export const signupFail = (reason) => ({
 //Async functions
 export function logIn(username, password) {
   return function(dispatch) {
-    console.log('login started');
-    //flag starting logIn
     dispatch(loginStart);
 
     //set logged in user (tmp code for testing)
@@ -84,35 +88,64 @@ export function logIn(username, password) {
         user.userType = userLevel.superAdmin;
         break;
       default:
-        return dispatch(loginFail("user not recognised"));
+        //this needs removing from the switch statement when we know it works
+        Auth.signIn(username,password)
+          .then(data => {
+            console.log(data);
+            user = {
+              username: data.signInUserSession.idToken.payload.email,
+              name: data.signInUserSession.idToken.payload.name
+            }
+            return dispatch(loginSuccess(user, data.signInUserSession.accessToken));
+          })
+          .catch(err => {
+            return dispatch(loginFail(err.message));
+          });
+
+
+        //return dispatch(loginFail("user not recognised"));
     }
     //flag login successful
-    return dispatch(loginSuccess(user));
+    //return dispatch(loginSuccess(user));
 
   }
 }
 
-export function applicationReloaded() {
-  //not yet implemented. Needs to get current session and restore login state
+export function restoreSession() {
+  //not yet fully implemented. Needs to get current session and restore login state
   return function(dispatch) {
-
+    Auth.currentSession()
+    .then(data => {
+      console.log(data)
+      //reset state from session
+    })
+    .catch(err => {
+      console.log(err)
+      //set state ready for new login
+    });
   }
 }
 
 export function logUserOut() {
   return function(dispatch) {
+    dispatch(logOutStart());
     // tmp code
-    return dispatch(logOut());
+    Auth.signOut()
+      .then(data => console.log(data))
+      .catch(err => console.log(err));
+    return dispatch(logOutComplete());
   }
 }
 
 export function signUp(username, password, fullname) {
   return function(dispatch) {
     //signup code here
-    console.log('signing up '+username);
     Auth.signUp({
       username: username,
-      password: password
+      password: password,
+      attributes: {
+        name: fullname,
+      }
     })
     .then(data => {
       console.log(data);

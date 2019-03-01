@@ -1,10 +1,12 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
+import {Link} from 'react-router-dom';
 import {
-  Container, Button, Form, Grid, Message, Progress
+  Button, Form, Grid, Message, Header, Transition
 } from 'semantic-ui-react';
 import {connect} from 'react-redux';
 import {signUp} from '../actions/authActions';
-import passwordStrength from '../lib/passwordStrength';
+import CheckedItem from '../components/CheckedItem';
+
 
 
 
@@ -14,11 +16,14 @@ class SignupForm extends Component {
     this.state = {
         email: "",
         password: "",
+        confirmPassword: "",
         name: "",
         successMsg: "",
         warningMsg: "",
         errorMsg: "",
-        passwordStrength: 0
+        longEnough: false,
+        hasUppercase: false,
+        hasLowercase: false
     }
     //this.handleChange=this.handleChange.bind(this);
     //this.handleSubmit=this.handleSubmit.bind(this);
@@ -29,28 +34,52 @@ class SignupForm extends Component {
       [id]: value
     });
     if(id === "password") {
-      console.log('checking password strength');
-      this.setState({
-        passwordStrength: passwordStrength(this.state.password)
-      })
-
+      this.checkPasswordCriteria();
     }
   }
 
+  checkPasswordCriteria = () => {
+    const hasNumber = value => {
+       return new RegExp(/[0-9]/).test(value);
+    }
+    const hasUpper = value => {
+       return new RegExp(/[A-Z]/).test(value);
+    }
+    const hasLower = value => {
+      return new RegExp(/[a-z]/).test(value);
+    }
+    const isLongEnough = value => {
+      return value.length >= 8;
+    }
+    this.setState({
+      longEnough: isLongEnough(this.state.password),
+      hasUppercase: hasUpper(this.state.password),
+      hasLowercase: hasLower(this.state.password),
+      hasNumber: hasNumber(this.state.password)
+    });
+  }
 
   handleSubmit = event => {
     event.preventDefault();
     this.props.onSubmitUserSignup(this.state.email, this.state.password, this.state.name);
   }
 
+  formValid = () => {
+    return this.state.longEnough && this.state.hasUppercase && this.state.hasLowercase && this.state.hasNumber && this.state.password===this.state.confirmPassword && this.state.email !== "" && this.state.name !== "";
+
+  }
+
   renderSignupForm = () => {
+    console.log(this.formValid());
     return(
       <Grid centered>
         <Grid.Row>
           <Grid.Column mobile={14} tablet={8} computer={6}>
+            <Header as='h1'>Create new account</Header>
               <Form
                 onSubmit={this.handleSubmit}
                 error={this.props.signupFailureReason !== ''}
+                loading={this.props.signupInProgress}
               >
                 <Form.Input
                   required
@@ -72,15 +101,34 @@ class SignupForm extends Component {
                   placeholder="Password..."
                   onChange={this.handleChange}
                 />
-                <Progress
-                  size='tiny'
-                  percent={this.state.passwordStrength}
-                  warning={this.state.passwordStrength < 60 && this.state.passwordStrength >= 30}
-                  success={this.state.passwordStrength >= 60}
-                  error={this.state.passwordStrength < 30}
+                <Transition
+                  visible={!this.state.hasNumber || !this.state.hasUppercase || !this.state.hasLowercase || !this.state.longEnough}
+                  animation="slide up"
+                  duration={500}
                 >
-                Password Strength
-                </Progress>
+                  <Message
+                    color='brown'
+                  >
+                    <Message.Header>Your password should include...</Message.Header>
+                    <CheckedItem done={this.state.longEnough} text="at least 8 characters" />
+                    <CheckedItem done={this.state.hasUppercase} text="uppercase letters" />
+                    <CheckedItem done={this.state.hasLowercase} text="lowercase letters" />
+                    <CheckedItem done={this.state.hasNumber} text="numbers" />
+                  </Message>
+                </Transition>
+
+                <Form.Input
+                  required
+                  label="Confirm password"
+                  type="password"
+                  id="confirmPassword"
+                  icon="key"
+                  iconPosition="left"
+                  placeholder="Password..."
+                  onChange={this.handleChange}
+                  error={this.state.confirmPassword!==this.state.password}
+                />
+
                 <Form.Input
                   required
                   label="Your Name"
@@ -110,18 +158,60 @@ class SignupForm extends Component {
           </Grid.Column>
         </Grid.Row>
         <Grid.Row>
-          <Grid.Column mobile={14} tablet={8} computer={6}><Button fluid onClick={this.handleSubmit}>Sign me up!</Button></Grid.Column>
+          <Grid.Column mobile={14} tablet={8} computer={6}>
+            <Button
+              fluid
+              color="red"
+              size="large"
+              onClick={this.handleSubmit}
+              disabled={!this.formValid()}
+            >
+              Sign me up!
+            </Button>
+          </Grid.Column>
         </Grid.Row>
         <Grid.Row>
-        <Grid.Column mobile={14} tablet={8} computer={6}>&nbsp;</Grid.Column>
+          <Grid.Column textAlign="center" mobile={14} tablet={8} computer={6}>Already signed up? <Link to="/login">Log in here.</Link></Grid.Column>
+        </Grid.Row>
+        <Grid.Row>
+          <Grid.Column mobile={14} tablet={8} computer={6}>&nbsp;</Grid.Column>
         </Grid.Row>
       </Grid>
     );
 
   }
 
+  renderSignupConfirmation = () => {
+    return (
+      <Grid centered>
+        <Grid.Row>
+          <Grid.Column mobile={14} tablet={8} computer={6}>
+            <Message
+              success
+              icon="thumbs up"
+              header="Congratulations"
+              content="You've signed up. Now check your email for a confirmation link."
+            />
+            <Button
+              as={Link}
+              to="/"
+              color="red"
+              size="large"
+            >
+            Continue to Home
+            </Button>
+          </Grid.Column>
+        </Grid.Row>
+      </Grid>
+    )
+  }
+
   render() {
-    return this.renderSignupForm();
+    if(this.props.signupSuccess) {
+      return this.renderSignupConfirmation()
+    } else {
+      return this.renderSignupForm();
+    }
   }
 
 }
@@ -137,6 +227,7 @@ class SignupForm extends Component {
  const mapStateToProps = (state,ownProps) => ({
    loggedIn: state.userAuth.loggedIn,
    signupInProgress: state.userAuth.signupInProgress,
+   signupSuccess: state.userAuth.signupSuccess,
    signupFailureReason: state.userAuth.signupFailureReason
  });
 
